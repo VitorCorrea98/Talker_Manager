@@ -1,6 +1,8 @@
 const express = require('express');
+const randomToken = require('random-token');
 const readFile = require('./fs/readFile');
 const checkId = require('./Middleware/checkId');
+const checkLogin = require('./Middleware/checkLogin');
 
 const app = express();
 app.use(express.json());
@@ -26,6 +28,12 @@ app.get('/talker/:id', checkId, async (req, res) => {
   const talker = talkers.find((talk) => talk.id === Number(id));
 
   res.status(200).json(talker);
+});
+
+app.post('/login', checkLogin, async (req, res) => {
+  const token = randomToken(16);
+
+  res.status(200).json({ token });
 });
 
 app.listen(PORT, () => {
