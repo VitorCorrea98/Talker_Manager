@@ -12,6 +12,7 @@ const {
   checkRate } = require('./Middleware/POST_Talker');
 const writeFile = require('./fs/writeFile');
 const checkAuth = require('./Middleware/POST_Talker/checkAuth');
+const checkTalkerSearch = require('./Middleware/GET_Talker_Search');
 // const writeID = require('./fs/writeID');
 
 const app = express();
@@ -32,12 +33,21 @@ app.get('/talker', async (_req, res) => {
   res.status(200).json(talkers);
 });
 
+app.get('/talker/search', checkAuth, checkTalkerSearch, async (req, res) => {
+  const searchQuery = req.query.q;
+  const recentTalkers = await readFile(PATH);
+
+  const talkersFound = recentTalkers.filter((talker) => talker.name.includes(searchQuery));
+
+  res.status(200).json(talkersFound);
+});
+
 app.get('/talker/:id', checkId, async (req, res) => {
   const { id } = req.params;
   const talkers = await readFile(PATH);
-
+  
   const talker = talkers.find((talk) => talk.id === Number(id));
-
+  
   res.status(200).json(talker);
 });
 
