@@ -1,4 +1,4 @@
-const readFile = require('../fs/readFile');
+const readFile = require('../../fs/readFile');
 
 const checkId = async (req, res, next) => {
   const talkers = await readFile('src/talker.json');
