@@ -12,7 +12,7 @@ const {
   checkRate } = require('./Middleware/POST_Talker');
 const writeFile = require('./fs/writeFile');
 const checkAuth = require('./Middleware/POST_Talker/checkAuth');
-const checkTalkerSearch = require('./Middleware/GET_Talker_Search');
+const { checkTalkerSearch, checkTalkerRate } = require('./Middleware/GET_Talker_Search');
 // const writeID = require('./fs/writeID');
 
 const app = express();
@@ -33,13 +33,22 @@ app.get('/talker', async (_req, res) => {
   res.status(200).json(talkers);
 });
 
-app.get('/talker/search', checkAuth, checkTalkerSearch, async (req, res) => {
+app.get('/talker/search', checkAuth, checkTalkerSearch, checkTalkerRate, async (req, res) => {
   const searchQuery = req.query.q;
+  const searchRate = Number(req.query.rate);
   const recentTalkers = await readFile(PATH);
 
-  const talkersFound = recentTalkers.filter((talker) => talker.name.includes(searchQuery));
+  const talkersFound = searchQuery ? (
+    recentTalkers.filter((talker) => talker.name.includes(searchQuery))
+  ) : (recentTalkers);
+  const filteredRate = talkersFound.filter((talker) => Number(talker.talk.rate) === searchRate);
 
-  res.status(200).json(talkersFound);
+  console.log({ searchQuery, searchRate });
+  console.log({ filteredRate, talkersFound });
+
+  const answer = searchRate ? filteredRate : talkersFound;
+
+  res.status(200).json(answer);
 });
 
 app.get('/talker/:id', checkId, async (req, res) => {
