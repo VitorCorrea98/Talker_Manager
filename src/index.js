@@ -11,6 +11,7 @@ const {
   checkTalk,
   checkRate } = require('./Middleware/POST_Talker');
 const writeFile = require('./fs/writeFile');
+const checkAuth = require('./Middleware/POST_Talker/checkAuth');
 // const writeID = require('./fs/writeID');
 
 const app = express();
@@ -89,6 +90,16 @@ app.put('/talker/:id',
     await writeFile(PATH, oldTalkers);
     res.status(200).json(formatedTalker);
   });
+
+app.delete('/talker/:id', checkAuth, async (req, res) => {
+  const recentContent = await readFile(PATH);
+  const { id } = req.params;
+  const removedTalker = recentContent.filter((talker) => talker.id !== Number(id));
+  console.log({ removedTalker, recentContent });
+
+  await writeFile(PATH, removedTalker);
+  res.status(204).end();
+});
 
 app.listen(PORT, () => {
   console.log('Online');
