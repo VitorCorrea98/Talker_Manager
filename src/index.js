@@ -11,7 +11,7 @@ const {
   checkTalk,
   checkRate } = require('./Middleware/POST_Talker');
 const writeFile = require('./fs/writeFile');
-// const checkNewTalkerPOST = require('./Middleware/POST_Talker');
+// const writeID = require('./fs/writeID');
 
 const app = express();
 app.use(express.json());
@@ -19,6 +19,7 @@ app.use(express.json());
 const HTTP_OK_STATUS = 200;
 const PORT = process.env.PORT || '3001';
 const PATH = 'src/talker.json';
+// const ID = 'src/ID.json';
 
 // não remova esse endpoint, e para o avaliador funcionar
 app.get('/', (_request, response) => {
@@ -52,16 +53,41 @@ app.post('/talker',
   checkTalk, 
   checkWatchedAt, 
   checkRate, async (req, res) => {
-    const recentTalkers = await readFile(PATH);
-    const id = recentTalkers.length + 1;
+    const recentContent = await readFile(PATH);
+    const id = recentContent.length + 1;
     const newTalker = {
       id,
       ...req.body,
     };
 
-    await writeFile(PATH, newTalker);
-
+    await writeFile(PATH, [...recentContent, newTalker]);
     res.status(201).json(newTalker);
+  });
+
+app.put('/talker/:id',
+  chekAuth, 
+  checkName, 
+  checkAge, 
+  checkTalk, 
+  checkWatchedAt, 
+  checkRate, 
+  checkId, async (req, res) => {
+    const oldTalkers = await readFile(PATH);
+    const { id } = req.params;
+    const choosenTalker = oldTalkers.find((talker) => talker.id === Number(id));
+    const { name, age, talk } = req.body;
+
+    choosenTalker.name = name;
+    choosenTalker.age = age;
+    choosenTalker.talk = talk;
+
+    const formatedTalker = {
+      id: Number(id),
+      ...choosenTalker,
+    };
+
+    await writeFile(PATH, oldTalkers);
+    res.status(200).json(formatedTalker);
   });
 
 app.listen(PORT, () => {
