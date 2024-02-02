@@ -17,7 +17,7 @@ const {
   checkTalkerRate, 
   checkTalkerDate } = require('./Middleware/GET_Talker_Search');
 const checkPatchRate = require('./Middleware/PATCH_Talker_Id/checkPatchRate');
-// const writeID = require('./fs/writeID');
+const connection = require('./db/connection');
 
 const app = express();
 app.use(express.json());
@@ -35,6 +35,25 @@ app.get('/', (_request, response) => {
 app.get('/talker', async (_req, res) => {
   const talkers = await readFile(PATH);
   res.status(200).json(talkers);
+});
+
+app.get('/talker/db', async (_req, res) => {
+  const [result] = await connection.execute('SELECT * FROM talkers');
+  const fixedResult = result.reduce((acc, curr) => {
+    const newTalker = {
+      age: curr.age,
+      name: curr.name,
+      id: curr.id,
+      talk: {
+        watchedAt: curr.talk_watched_at,
+        rate: curr.talk_rate,
+      },
+    };
+
+    return [...acc, newTalker];
+  }, []);
+  console.log(fixedResult);
+  res.status(200).json(fixedResult);
 });
 
 app.get('/talker/search', 
@@ -59,7 +78,6 @@ app.get('/talker/search',
 
     res.status(200).json(filteredDate);
   });
-
 app.get('/talker/:id', checkId, async (req, res) => {
   const { id } = req.params;
   const talkers = await readFile(PATH);
@@ -141,6 +159,6 @@ app.patch('/talker/rate/:id', checkAuth, checkPatchRate, async (req, res) => {
   res.status(204).end();
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log('Online');
 });
