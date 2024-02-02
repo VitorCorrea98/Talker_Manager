@@ -16,6 +16,7 @@ const {
   checkTalkerSearch, 
   checkTalkerRate, 
   checkTalkerDate } = require('./Middleware/GET_Talker_Search');
+const checkPatchRate = require('./Middleware/PATCH_Talker_Id/checkPatchRate');
 // const writeID = require('./fs/writeID');
 
 const app = express();
@@ -124,6 +125,19 @@ app.delete('/talker/:id', checkAuth, async (req, res) => {
   const removedTalker = recentContent.filter((talker) => talker.id !== Number(id));
 
   await writeFile(PATH, removedTalker);
+  res.status(204).end();
+});
+
+app.patch('/talker/rate/:id', checkAuth, checkPatchRate, async (req, res) => {
+  const { id } = req.params;
+  const { rate } = req.body;
+  const talkers = await readFile(PATH);
+
+  const choosenTalker = talkers.find((talker) => talker.id === Number(id));
+
+  choosenTalker.talk.rate = rate;
+
+  await writeFile(PATH, talkers);
   res.status(204).end();
 });
 
