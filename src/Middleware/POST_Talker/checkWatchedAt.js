@@ -3,7 +3,7 @@ const checkWatchedAt = async (req, res, next) => {
   const { watchedAt } = talk;
   let message = '';
 
-  const testWatchedAt = /^(0?[1-9]|[12][0-9]|3[01])[/-](0?[1-9]|1[012])[/-]\d{4}$/.test(watchedAt);
+  const testWatchedAt = /^(0?[1-9]|[12][0-9]|3[01])[/](0?[1-9]|1[012])[/]\d{4}$/.test(watchedAt);
 
   if (!watchedAt) {
     message = 'O campo "watchedAt" é obrigatório';

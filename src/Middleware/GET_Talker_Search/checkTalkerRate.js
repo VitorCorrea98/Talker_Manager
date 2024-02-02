@@ -1,12 +1,14 @@
+const checkInteger = require('../../helper/checkInteger_1_5');
+const otherQueriesUndefined = require('../../helper/otherUndefined');
+
 const checkTalkerRate = async (req, res, next) => {
-  const searchRate = req.query.rate;
-  const searchParam = req.query.q;
+  const { q, rate, date } = req.query;
 
-  const checkInteger = parseInt(searchRate, 10) === parseFloat(searchRate);
+  const checkForInteger = checkInteger(rate);
   const message = 'O campo "rate" deve ser um número inteiro entre 1 e 5';
+  const othersUndefined = otherQueriesUndefined(q, date);
 
-  if ((!checkInteger || Number(searchRate) < 1 
-  || Number(searchRate) > 5) && searchParam === undefined) {
+  if (checkForInteger && othersUndefined) {
     return res.status(400).json({ message });
   }
   return next();

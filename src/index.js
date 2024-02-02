@@ -12,7 +12,10 @@ const {
   checkRate } = require('./Middleware/POST_Talker');
 const writeFile = require('./fs/writeFile');
 const checkAuth = require('./Middleware/POST_Talker/checkAuth');
-const { checkTalkerSearch, checkTalkerRate } = require('./Middleware/GET_Talker_Search');
+const { 
+  checkTalkerSearch, 
+  checkTalkerRate, 
+  checkTalkerDate } = require('./Middleware/GET_Talker_Search');
 // const writeID = require('./fs/writeID');
 
 const app = express();
@@ -33,23 +36,28 @@ app.get('/talker', async (_req, res) => {
   res.status(200).json(talkers);
 });
 
-app.get('/talker/search', checkAuth, checkTalkerSearch, checkTalkerRate, async (req, res) => {
-  const searchQuery = req.query.q;
-  const searchRate = Number(req.query.rate);
-  const recentTalkers = await readFile(PATH);
+app.get('/talker/search', 
+  checkAuth, 
+  checkTalkerSearch, 
+  checkTalkerRate, 
+  checkTalkerDate, async (req, res) => {
+    const { query } = req;
+    const { q, rate, date } = query;
+    const recentTalkers = await readFile(PATH);
 
-  const talkersFound = searchQuery ? (
-    recentTalkers.filter((talker) => talker.name.includes(searchQuery))
-  ) : (recentTalkers);
-  const filteredRate = talkersFound.filter((talker) => Number(talker.talk.rate) === searchRate);
+    const talkersFound = q ? (
+      recentTalkers.filter((talker) => talker.name.includes(q))
+    ) : recentTalkers;
 
-  console.log({ searchQuery, searchRate });
-  console.log({ filteredRate, talkersFound });
+    const filteredRate = rate ? talkersFound
+      .filter((talker) => Number(talker.talk.rate) === Number(rate)) : talkersFound;
 
-  const answer = searchRate ? filteredRate : talkersFound;
+    const filteredDate = date ? (
+      filteredRate
+        .filter((talker) => talker.talk.watchedAt === date)) : filteredRate;
 
-  res.status(200).json(answer);
-});
+    res.status(200).json(filteredDate);
+  });
 
 app.get('/talker/:id', checkId, async (req, res) => {
   const { id } = req.params;
@@ -114,7 +122,6 @@ app.delete('/talker/:id', checkAuth, async (req, res) => {
   const recentContent = await readFile(PATH);
   const { id } = req.params;
   const removedTalker = recentContent.filter((talker) => talker.id !== Number(id));
-  console.log({ removedTalker, recentContent });
 
   await writeFile(PATH, removedTalker);
   res.status(204).end();
