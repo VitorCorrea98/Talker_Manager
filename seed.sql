@@ -9,7 +9,7 @@ CREATE TABLE
   talkers (
     name VARCHAR(512),
     age INT,
-    id INT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     talk_watched_at VARCHAR(512),
     talk_rate INT
   );

@@ -18,6 +18,8 @@ const {
   checkTalkerDate } = require('./Middleware/GET_Talker_Search');
 const checkPatchRate = require('./Middleware/PATCH_Talker_Id/checkPatchRate');
 const connection = require('./db/connection');
+const poepleDB = require('./db/peopleDB');
+const DBFormatOBJ = require('./helper/DBFormatOBJ');
 
 const app = express();
 app.use(express.json());
@@ -39,19 +41,7 @@ app.get('/talker', async (_req, res) => {
 
 app.get('/talker/db', async (_req, res) => {
   const [result] = await connection.execute('SELECT * FROM talkers');
-  const fixedResult = result.reduce((acc, curr) => {
-    const newTalker = {
-      age: curr.age,
-      name: curr.name,
-      id: curr.id,
-      talk: {
-        watchedAt: curr.talk_watched_at,
-        rate: curr.talk_rate,
-      },
-    };
-
-    return [...acc, newTalker];
-  }, []);
+  const fixedResult = DBFormatOBJ(result);
   console.log(fixedResult);
   res.status(200).json(fixedResult);
 });
@@ -78,6 +68,7 @@ app.get('/talker/search',
 
     res.status(200).json(filteredDate);
   });
+
 app.get('/talker/:id', checkId, async (req, res) => {
   const { id } = req.params;
   const talkers = await readFile(PATH);
@@ -85,6 +76,24 @@ app.get('/talker/:id', checkId, async (req, res) => {
   const talker = talkers.find((talk) => talk.id === Number(id));
   
   res.status(200).json(talker);
+});
+
+app.post('/talker/db', async (req, res) => {
+  const person = req.body;
+  try {
+    const [result] = await poepleDB.insert(person);
+    const [talkers] = await connection.execute('SELECT * FROM talkers');
+    const formatedTalkers = DBFormatOBJ(talkers);
+    console.log(formatedTalkers);
+    await writeFile(PATH, formatedTalkers);
+
+    res.status(200).json({
+      message: `Talker cadastrado com sucesso com id ${result.insertId}`,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ messge: 'ERRO ao cadastrar' });
+  }
 });
 
 app.post('/login', checkLogin, async (_req, res) => {
@@ -136,6 +145,17 @@ app.put('/talker/:id',
     await writeFile(PATH, oldTalkers);
     res.status(200).json(formatedTalker);
   });
+
+app.delete('/talker/db/:id', async (req, res) => {
+  const { id } = req.params;
+  await poepleDB.deleteID(Number(id));
+  const [talkers] = await connection.execute('SELECT * FROM talkers');
+  const formatedTalker = DBFormatOBJ(talkers);
+  await writeFile(PATH, formatedTalker);
+  res.status(200).json({
+    message: `Usuário deletado com sucesso com o id ${id}`,
+  });
+});
 
 app.delete('/talker/:id', checkAuth, async (req, res) => {
   const recentContent = await readFile(PATH);
