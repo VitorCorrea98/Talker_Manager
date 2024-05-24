@@ -18,7 +18,7 @@ const {
   checkTalkerDate } = require('./Middleware/GET_Talker_Search');
 const checkPatchRate = require('./Middleware/PATCH_Talker_Id/checkPatchRate');
 const connection = require('./db/connection');
-const poepleDB = require('./db/peopleDB');
+const { deleteID, insert } = require('./db/peopleDB');
 const DBFormatOBJ = require('./helper/DBFormatOBJ');
 
 const app = express();
@@ -81,7 +81,7 @@ app.get('/talker/:id', checkId, async (req, res) => {
 app.post('/talker/db', async (req, res) => {
   const person = req.body;
   try {
-    const [result] = await poepleDB.insert(person);
+    const [result] = await insert(person);
     const [talkers] = await connection.execute('SELECT * FROM talkers');
     const formatedTalkers = DBFormatOBJ(talkers);
     console.log(formatedTalkers);
@@ -148,7 +148,7 @@ app.put('/talker/:id',
 
 app.delete('/talker/db/:id', async (req, res) => {
   const { id } = req.params;
-  await poepleDB.deleteID(Number(id));
+  await deleteID(Number(id));
   const [talkers] = await connection.execute('SELECT * FROM talkers');
   const formatedTalker = DBFormatOBJ(talkers);
   await writeFile(PATH, formatedTalker);
